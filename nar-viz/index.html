@@ -1,0 +1,89 @@
+<html>
+    <head>
+        <title>CS 416 Narrative Visualization</title>
+        <style>
+            body {
+                font-family: Arial, Helvetica, sans-serif
+            }
+            header {
+                background-color: #2277cc;
+                padding: 25px;
+                text-align: center;
+                font-size: 30px;
+                color: white;
+            }
+            chart {
+                background-color: #d3d3d3;
+                width: 70%;
+                height: 75%;
+                display: table;
+                float: left
+            }
+            nav {
+                background-color: #a1a1a1;
+                width: 30%;
+                height: 10%;
+                display: table;
+                float: right
+            }
+            article {
+                background-color: #cdcdcd;
+                width: 30%;
+                height: 65%;
+                display: table;
+                float: right;
+            }
+            #nav-text {
+                padding: 20px;
+            }
+            svg {
+                width: 95%;
+                height: 95%;
+            }
+        </style>
+    </head>
+    <header>Narrative Visualization</header>
+    <script src="./d3.v7.js">
+    </script>
+    <body>
+        <chart>
+            Test
+            <svg>
+
+            </svg>
+        </chart>
+        <nav>
+            <p id="nav-text">
+                Nav bar
+            </p>
+        </nav>
+        <article>
+            Text
+        </article>
+    </body>
+    <script>
+        d3.select(`svg`)
+        .append(`g`)
+        .selectAll(`circle`)
+        .data([1, 4, 7, 9, 11])
+        .enter()
+        .append(`circle`)
+        .attr(`cx`, (d, i) => 100 + d)
+        .attr(`cy`, (d, i) => i * 100 + 100)
+        .attr(`r`, (d, i) => d * 4)
+
+        // console.log([1, 4, 7, 9, 11])
+
+        // async () => {
+        //     const data = await d3.csv(`./data/bat.csv`)
+        //     console.log(data)
+        // }
+        d3.csv(`./data/bat.csv`)
+        .then(data => {
+            console.log(data)
+        })
+        .catch(error => {
+            console.log(error)
+        })
+    </script>
+</html>
