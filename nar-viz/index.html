@@ -13,7 +13,7 @@
                 color: white;
             }
             chart {
-                background-color: #d3d3d3;
+                background-color: #e9e9e9;
                 width: 70%;
                 height: 75%;
                 display: table;
@@ -39,19 +39,29 @@
             svg {
                 width: 95%;
                 height: 95%;
+                display: table;
+                float: left;
+            }
+            tooltip {
+                width: 100px;
+                height: 100px;
+                opacity: 0;
             }
         </style>
     </head>
     <header>Narrative Visualization</header>
     <script src="./d3.v7.js">
     </script>
-    <body>
+    <body onload="loadData()">
         <chart>
-            Test
-            <svg>
+        <tooltip>
+            
+        </tooltip>
+        <svg>
 
-            </svg>
+        </svg>   
         </chart>
+       
         <nav>
             <p id="nav-text">
                 Nav bar
@@ -62,15 +72,15 @@
         </article>
     </body>
     <script>
-        d3.select(`svg`)
-        .append(`g`)
-        .selectAll(`circle`)
-        .data([1, 4, 7, 9, 11])
-        .enter()
-        .append(`circle`)
-        .attr(`cx`, (d, i) => 100 + d)
-        .attr(`cy`, (d, i) => i * 100 + 100)
-        .attr(`r`, (d, i) => d * 4)
+        // d3.select(`svg`)
+        // .append(`g`)
+        // .selectAll(`circle`)
+        // .data([1, 4, 7, 9, 11])
+        // .enter()
+        // .append(`circle`)
+        // .attr(`cx`, (d, i) => 100 + d)
+        // .attr(`cy`, (d, i) => i * 100 + 100)
+        // .attr(`r`, (d, i) => d * 4)
 
         // console.log([1, 4, 7, 9, 11])
 
@@ -78,12 +88,101 @@
         //     const data = await d3.csv(`./data/bat.csv`)
         //     console.log(data)
         // }
-        d3.csv(`./data/bat.csv`)
-        .then(data => {
-            console.log(data)
-        })
-        .catch(error => {
-            console.log(error)
-        })
+
+        // d3.csv(`https://dffattal.github.io/nar-viz/data/bat.csv`)
+        // .then(data => {
+        //     console.log(data)
+        //     for (const row in data) {
+        //         console.log(data[row][`SO`])
+        //     }
+        // })
+        // .catch(error => {
+        //     console.log(error)
+        // })
+
+
+        async function loadData() {
+            const svgDimensions = d3.select(`svg`).node().getBoundingClientRect()
+            const width = svgDimensions.width
+            const height = svgDimensions.height
+            const margin = 50
+
+            const data = await d3.csv(`https://dffattal.github.io/nar-viz/data/bat.csv`)
+            // console.log(data)
+            const dataValues = []
+
+            for (var i = 44; i >= 0; i--) { //filter data from 1980-2024
+                dataValues.push(data[i])
+            }
+
+            const statColors = {
+                SO: `firebrick`,
+                BB: `dodgerblue`,
+                HR: `yellowgreen`
+            }
+
+            function drawLineChart(statName, index) {
+                d3.selectAll(`path[class=path${index - 1}]`)
+                .remove()
+
+                d3.selectAll(`g[class=${statName}]`)
+                .remove()
+
+                d3.select(`svg`)
+                .append(`path`)
+                .attr(`transform`, `translate(${margin},${margin})`)
+                .attr(`class`, `path${index}`)
+                .datum(dataValues.slice(0, index + 1))
+                .attr(`fill`, `none`)
+                .attr(`stroke`, statColors[statName])
+                .attr(`stroke-width`, 3)
+                .attr(`d`, d3.line().x(d => xAxis(d[`Year`])).y(d => yAxis(d[statName])))
+
+                d3.select(`svg`)
+                .append(`g`)
+                .attr(`transform`, `translate(${margin},${margin})`)
+                .attr(`class`, statName)
+                .selectAll(`circle`)
+                .data(dataValues.slice(0, index + 1))
+                .enter()
+                .append(`circle`)
+                .style(`stroke`, `black`)
+                .style(`fill`, statColors[statName])
+                .attr(`r`, () => 4)
+                .attr(`cx`, d => xAxis(d[`Year`]))
+                .attr(`cy`, d => yAxis(d[statName]))
+
+                if (index < 44) setTimeout(drawLineChart, 100, statName, index + 1)
+            }
+
+            const xAxis = d3.scaleLinear()
+            .domain([1980, 2024])
+            .range([0, width - margin * 2])
+            d3.select(`svg`)
+            .append(`g`)
+            .attr(`transform`, `translate(${margin},${height - margin})`)
+            .call(d3.axisBottom(xAxis).tickFormat(d3.format(`d`)))
+
+            const yAxis = d3.scaleLinear()
+            .domain([0, 9])
+            .range([height - margin * 2, 0])
+            d3.select(`svg`)
+            .append(`g`)
+            .attr(`transform`, `translate(${margin},${margin})`)
+            .call(d3.axisLeft(yAxis))
+
+            drawLineChart(`SO`, 1)
+            drawLineChart(`BB`, 1)
+            drawLineChart(`HR`, 1)
+
+            // d3.select(`svg`)
+            // .append(`path`)
+            // .attr(`transform`, `translate(${margin},${margin})`)
+            // .datum(dataValues)
+            // .attr(`fill`, `none`)
+            // .attr(`stroke`, `dodgerblue`)
+            // .attr(`stroke-width`, 2)
+            // .attr(`d`, d3.line().x(d => xAxis(d[`Year`])).y(d => yAxis(d[`SO`])))
+        }
     </script>
 </html>
