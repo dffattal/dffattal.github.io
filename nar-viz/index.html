@@ -6,11 +6,11 @@
                 font-family: Arial, Helvetica, sans-serif
             }
             header {
-                background-color: #2277cc;
+                background-color: #e9e9e9;
                 padding: 25px;
                 text-align: center;
                 font-size: 30px;
-                color: white;
+                color: black;
             }
             chart {
                 background-color: #e9e9e9;
@@ -43,13 +43,18 @@
                 float: left;
             }
             tooltip {
-                width: 100px;
+                width: 250px;
                 height: 100px;
                 opacity: 0;
+                position: absolute;
+                border-radius: 20px;
+                border: 1px solid #666666;
+                background-color: #e9e9e9;
+                padding: 10px;
             }
         </style>
     </head>
-    <header>Narrative Visualization</header>
+    <header>The Rise of Three True Outcomes and Other Recent MLB Trends</header>
     <script src="./d3.v7.js">
     </script>
     <body onload="loadData()">
@@ -106,19 +111,24 @@
             const width = svgDimensions.width
             const height = svgDimensions.height
             const margin = 50
+            const tooltipWidth = width / 45
 
             const data = await d3.csv(`https://dffattal.github.io/nar-viz/data/bat.csv`)
             // console.log(data)
             const dataValues = []
 
+            const tooltip = d3.select(`tooltip`)
+
             for (var i = 44; i >= 0; i--) { //filter data from 1980-2024
+                data[i][`TTO`] = (Number(data[i][`SO`]) + Number(data[i][`BB`]) + Number(data[i][`HR`])).toFixed(2)
                 dataValues.push(data[i])
             }
 
             const statColors = {
                 SO: `firebrick`,
                 BB: `dodgerblue`,
-                HR: `yellowgreen`
+                HR: `yellowgreen`,
+                TTO: `darkslategray`
             }
 
             function drawLineChart(statName, index) {
@@ -136,7 +146,7 @@
                 .attr(`fill`, `none`)
                 .attr(`stroke`, statColors[statName])
                 .attr(`stroke-width`, 3)
-                .attr(`d`, d3.line().x(d => xAxis(d[`Year`])).y(d => yAxis(d[statName])))
+                .attr(`d`, d3.line().x(d => xAxis(d[`Year`])).y(d => statName === `TTO` ? yAxis(d[`TTO`]) : yAxis(d[statName])))
 
                 d3.select(`svg`)
                 .append(`g`)
@@ -146,13 +156,20 @@
                 .data(dataValues.slice(0, index + 1))
                 .enter()
                 .append(`circle`)
+                // .on(`mouseover`, (_, d) => {
+                //     tooltip.style(`opacity`, 1)
+                //     .html(`Value is ${statName === `TTO` ? Number(d[`SO`]) + Number(d[`BB`]) + Number(d[`HR`]) : d[statName]}`)
+                // })
+                // .on(`mouseout`, (d, i) => {
+                //     tooltip.style(`opacity`, 0)
+                // })
                 .style(`stroke`, `black`)
                 .style(`fill`, statColors[statName])
                 .attr(`r`, () => 4)
                 .attr(`cx`, d => xAxis(d[`Year`]))
-                .attr(`cy`, d => yAxis(d[statName]))
+                .attr(`cy`, d => statName === `TTO` ? yAxis(d[`TTO`]) : yAxis(d[statName]))
 
-                if (index < 44) setTimeout(drawLineChart, 100, statName, index + 1)
+                if (index < 44) setTimeout(drawLineChart, 75, statName, index + 1)
             }
 
             const xAxis = d3.scaleLinear()
@@ -164,16 +181,59 @@
             .call(d3.axisBottom(xAxis).tickFormat(d3.format(`d`)))
 
             const yAxis = d3.scaleLinear()
-            .domain([0, 9])
+            .domain([0, 14])
             .range([height - margin * 2, 0])
             d3.select(`svg`)
             .append(`g`)
             .attr(`transform`, `translate(${margin},${margin})`)
             .call(d3.axisLeft(yAxis))
 
-            drawLineChart(`SO`, 1)
-            drawLineChart(`BB`, 1)
-            drawLineChart(`HR`, 1)
+            setTimeout(drawLineChart, 500, `SO`, 1)
+            setTimeout(drawLineChart, 500, `BB`, 1)
+            setTimeout(drawLineChart, 500, `HR`, 1)
+            setTimeout(drawLineChart, 5000, `TTO`, 1)
+
+            for (var i = 0; i < 45; i++) {
+                const yearData = dataValues[i]
+                const year = yearData['Year']
+
+                d3.select(`svg`)
+                .append(`rect`)
+                .attr(`transform`, `translate(${margin},${margin})`)
+                .attr(`class`, `tooltipHover${year}`)
+                .attr(`x`, xAxis(year) - tooltipWidth / 2)
+                .attr(`y`, 0)
+                .attr(`width`, tooltipWidth)
+                .attr(`height`, height)
+                .style(`opacity`, 0)
+                .attr(`z-index`, 1)
+                .on(`mouseover`, event => {
+                    d3.select(`line[class=tooltipLine${year}]`)
+                    .style(`stroke-width`, 1)
+                    d3.select(`tooltip`)
+                    .style(`opacity`, 1)
+                    .style(`left`, `${event.pageX + 15}px`)
+                    .style(`top`, `${event.pageY + 15}px`)
+                    .html(`<b>${year}</b>:<br><br>${yearData[`SO`]} strikeouts/game<br>${yearData[`BB`]} walks/game<br>${yearData[`HR`]} home runs/game<br>${yearData[`TTO`]} three true outcomes/game`)
+                })
+                .on(`mouseout`, () => {
+                    d3.select(`line[class=tooltipLine${year}]`)
+                    .style(`stroke-width`, 0)
+                    d3.select(`tooltip`)
+                    .style(`opacity`, 0)
+                })
+
+                d3.select(`svg`)
+                .append(`line`)
+                .attr(`transform`, `translate(${margin},${margin})`)
+                .attr(`class`, `tooltipLine${year}`)
+                .style(`stroke`, `black`)
+                .style(`stroke-width`, 0)
+                .attr(`x1`, xAxis(year))
+                .attr(`x2`, xAxis(year))
+                .attr(`y1`, 0)
+                .attr(`y2`, height - margin * 2)
+            }
 
             // d3.select(`svg`)
             // .append(`path`)
