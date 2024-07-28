@@ -5,6 +5,7 @@
             body {
                 font-family: Arial, Helvetica, sans-serif;
                 background-color: #d9d9d9;
+                overflow-x: hidden
             }
             header {
                 background-color: #d9d9d9;
@@ -89,7 +90,7 @@
     </script>
     <script src="./d3-annotation.min.js">
     </script>
-    <body onload="init(0, [`HR`], [0.5, 1.5])">
+    <body onload="init(0, [`HR`], [0.6, 1.4])">
         <chart>
             <legend>
             </legend>
@@ -142,24 +143,28 @@
         const pageData = [{
             page: 0,
             stats: [`HR`],
-            domain: [0.5, 1.5],
-            articleText: `<p>Major League Baseball has a rich history that has seen many major changes in strategy. Whether these changes were due to new rules or overall growth of the talent pool, they have helped to define various eras in the league's history. This page will analyze some of the visible trends from 1980 to the current season.</p><p>Without a doubt, the most exciting play in baseball for the casual fan is the home run. The </p><p>There are a multitude of factors that affect the likelihood of a home run on any given pitch, so it would not be surprising to see variance in home run rates.</p>`
+            domain: [0.6, 1.4],
+            articleText: `<p>Major League Baseball has a rich history that has seen many major changes in strategy. Whether these changes were due to new rules or overall growth of the talent pool, they have helped to define various eras in the league's history. This page will analyze some of the visible trends from 1980 to the current season.</p><p>Without a doubt, the most exciting play in baseball for the casual fan is the home run. There are a multitude of factors that affect the likelihood of a home run on any given pitch, including the design and structure of the ball itself. Since the league may be incentivized to have more home runs to attract fans, there have been multiple occasions where sharp increases in home run rates have come with speculation that the league has introduced a different ball into the games to facilitate an increase in home runs. Two of these possible occurrences are shown on this chart at 1987 and 2019.</p><p>This chart covers the pre-steroid and steroid eras from the late '80s to the early 2000s. Although steroid usage has died down since the league began drug testing, home run rates have remained relatively high in recent years. This may be due to the implementation of Statcast in 2015, which provides player data on advanced metrics such as the exit velocity and launch angle of balls put into play. Access to this information has helped players understand their shortcomings and improve their performance.</p><p>Home runs are one of the three "true outcomes" in baseball, a term given to the plays that result solely in the interaction between the pitcher and batter. We will look at the other two true outcomes, walks and strikeouts, in some of the remaining scenes.</p><p>Note: you may hover your cursor over the chart to access a tooltip displaying the exact values at each point, and hover over the badges for additional context at certain points.</p>`
         }, {
             page: 1,
-            stats: [`SO`],
-            domain: [4, 8]
+            stats: [`SB`, `SH`],
+            domain: [0, 0.9],
+            articleText: `<p>While home runs represent the ultimate display of power in baseball, there are also "small ball" strategies that require speed and technique. Among these techniques are stolen bases and sacrifice hits. A sacrifice hit is awarded when a batter intentionally bunts the ball, trading a likely out for an attempt to allow another baserunner to advance to the next base.</p><p>These strategies are referred to as "small ball" since, unlike home runs, they do not immediately lead to runs being scored but instead increase the chances of a run being scored on a subsequent play. Since these strategies have a chance to fail and backfire, they are considered to be more risky and are used at various rates by different managers. As the rate of home runs has increased during this time period, the rate of these small ball strategies has decreased, with sacrifice hits becoming almost nonexistent in the modern day. This trend is likely due to managers hoping to bank on the extra chances at guaranteed runs scored from players hitting home runs instead of taking additional risks.</p><p>Speedy players benefitted greatly from the rule change in 2023 mandating bases with 18-inch dimensions instead of 15-inch dimensions. This slight decrease in the distance between bases made a massive difference for a baserunner's ability to steal a base, leading to the highest rate of stolen bases in over 25 years.</p>`
         }, {
             page: 2,
-            stats: [`BB`],
-            domain: [3, 5]
+            stats: [`SO`, `BB`],
+            domain: [2.75, 9],
+            articleText: `<p>Along with home runs, strikeouts and walks make up the set of the three "true outcomes" in baseball. Like home run rates, strikeout rates have seen a steady rise over this time period. On the other hand, walk rates have remained relatively stable.</p><p>This highlights the controversial trend in modern baseball. More batters are swinging for the fences and taking an all-or-nothing approach in their at-bats. While batters are hitting more home runs than ever, they're also striking out at all-time high rates. Though this approach may not appeal to all fans, it has undeniably led to success for many offenses.</p><p>Batters may not be entirely to blame for this trend. As we will see, managers may be using pitchers more efficiently to enable their success.</p>`
         }, {
             page: 3,
-            stats: [`SB`],
-            domain: [0.5, 1]
+            stats: [`Pitchers/G`],
+            domain: [2.5, 4.5],
+            articleText: `<p>In early eras of the league, pitchers would be expected to pitch the entire game on a regular basis. In contrast, recent generations have seen a heavier reliance on having multiple relief pitchers for the later innings. Managing the use of pitchers is a difficult task since pitchers can not re-enter the game after they have been substituted out.</p><p>Starting pitchers in modern baseball are typically not asked to throw more than around 90-100 pitches before they are replaced by a reliever. By setting a limit on the amount of pitches that starters can throw and by using multiple relievers in each game, pitchers can afford to expend more energy with each pitch. This leads to pitchers being able to throw harder than ever. For example, according to Statcast data the average fastball velocity has risen almost 3 miles per hour from 2007 to 2022. This increase in pitch power could also explain the rising trend in strikeout rate.</p><p>However, having pitchers expend more energy with each pitch may also be making them more susceptible to injury.</p>`
         }, {
             page: 4,
-            stats: [`SH`],
-            domain: [0, 0.5]
+            stats: [`Pitchers/S`],
+            domain: [14, 35],
+            articleText: `<p>While the roster size in the league has not seen many significant changes in decades, the total amount of pitchers that make appearances for each team in a season has risen dramatically in recent years. A reasonable explanation for this is that pitchers are getting injured more frequently. Season-ending injuries are quite common for pitchers, and may be increasing in frequency as pitchers are starting to throw harder than ever. Another possible explanation for this trend is that managers are taking more precautions by placing pitchers on the injured list for minor injuries more often, allowing them to call up short-term replacements.</p><p>It is clear that the sport of baseball has changed significantly over the past few generations, and it will be interesting to see what new developments await fans in the near future.</p>`
         }]
 
         const statColors = {
@@ -169,28 +174,35 @@
             TTO: `darkslategray`,
             R: `olivedrab`,
             SB: `darkgoldenrod`,
-            SH: `blueviolet`
+            SH: `blueviolet`,
+            'Pitchers/G': `darkorange`,
+            'Pitchers/S': `indianred`
         }
 
         const statLong = {
-            SO: `Strikeouts`,
-            BB: `Walks`,
-            HR: `Home Runs`,
-            TTO: `Three True Outcomes`,
-            R: `Runs`,
-            SB: `Stolen Bases`,
-            SH: `Sacrifice Hits`
+            SO: `Strikeouts per game`,
+            BB: `Walks per game`,
+            HR: `Home Runs per game`,
+            TTO: `Three True Outcomes per game`,
+            R: `Runs per game`,
+            SB: `Stolen Bases per game`,
+            SH: `Sacrifice Hits per game`,
+            'Pitchers/G': `Pitchers used per game`,
+            'Pitchers/S': `Pitchers used per season`
         }
 
-        var data = []
-        const dataValues = []
+        const batDataValues = []
+        const miscDataValues = []
+        var dataValues = batDataValues
 
         async function init(page, stats, domain) {
-            data = await d3.csv(`https://dffattal.github.io/nar-viz/data/bat.csv`)
+            const batData = await d3.csv(`https://dffattal.github.io/nar-viz/data/bat.csv`)
+            const miscData = await d3.csv(`https://dffattal.github.io/nar-viz/data/misc.csv`)
 
             for (var i = 44; i >= 0; i--) { //filter data from 1980-2024
-                data[i][`TTO`] = (Number(data[i][`SO`]) + Number(data[i][`BB`]) + Number(data[i][`HR`])).toFixed(2)
-                dataValues.push(data[i])
+                batData[i][`TTO`] = (Number(batData[i][`SO`]) + Number(batData[i][`BB`]) + Number(batData[i][`HR`])).toFixed(2)
+                batDataValues.push(batData[i])
+                miscDataValues.push(miscData[i])
             }
 
             const axes = setAxes(domain)
@@ -213,14 +225,25 @@
             d3.select(`#page${page}`)
             .classed(`button-active`, true)
 
+            const prevStats = pageData[currentPage][`stats`]
+
             currentPage = page
+
+            if (page === 3 || page === 4) {
+                dataValues = miscDataValues
+            }
+            else {
+                dataValues = batDataValues
+            }
 
             const stats = pageData[page][`stats`]
             const domain = pageData[page][`domain`]
 
             svg.selectAll(`circle[class=legendStat]`).remove()
             svg.selectAll(`text[class=legendLabel]`).remove()
-            svg.selectAll(`#chartPath`).remove()
+            for (var j = 0; j < prevStats.length; j++) {
+                svg.selectAll(`#chartPath${prevStats[j].replace(/[^a-zA-Z]/g, ``)}`).remove()
+            }
             svg.selectAll(`#chartData`).remove()
             svg.selectAll(`g[class=annotations]`).remove()
             svg.selectAll(`rect`).remove()
@@ -289,7 +312,114 @@
                         y: 'bottom'
                     }
                 }],
-                [
+                [{
+                    note: {
+                        label: `MLB increased the size of bases from 15 to 18 inches starting in the 2023 season. These few extra inches helped revitalize the running game as stolen base rates increased by over 40% from 2022.`,
+                        title: `2023`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(2023),
+                    y: yAxis(0.72),
+                    subject: {
+                        x: `left`,
+                        y: `top`
+                    }
+                }, {
+                    note: {
+                        label: `In 2020, the league implemented some temporary rules including the universal designated hitter (DH) which would be officially adopted in 2022. Pitchers would often be asked to attempt sacrifice hits. Removing them from batting lineups caused sacrifice hits to reach an all-time low.`,
+                        title: `2020`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(2020),
+                    y: yAxis(0.07),
+                    subject: {
+                        y: `bottom`
+                    }
+                }
+                ], [
+                {
+                    note: {
+                        label: `In an attempt to speed up the pace of play, MLB instituted a pitch clock in 2023. Pitchers must release all pitches in a timely manner instead of playing at their own rhythm. Automatic balls are awarded for pitcher violations, and automatic strikes are awarded for batter violations.`,
+                        title: `2023`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(2023),
+                    y: yAxis(3.25),
+                    subject: {
+                        y: `top`
+                    }
+                }, {
+                    note: {
+                        label: `The introduction of Statcast in 2007 didn't only serve to help batters. Pitchers have also benefitted greatly from the advanced analytics, using the data to develop optimal strategies against individual hitters and skyrocketing strikeout rate.`,
+                        title: `2007`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(2007),
+                    y: yAxis(6.62),
+                    subject: {
+                        x: `right`,
+                        y: `bottom`
+                    }
+                }
+                ], [{
+                    note: {
+                        label: `Starting pitchers in the 1980 season would pitch a complete game about 20% of the time. In recent years, pitchers have thrown complete games in less than 1% of all games.`,
+                        title: `1980`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(1980),
+                    y: yAxis(2.56),
+                    subject: {
+                        x: `right`
+                    }
+                }, {
+                    note: {
+                        label: `The plateau in 2020 is likely due to another effort by the league to shorten the length of games. MLB introduced a rule forcing pitchers to either face a minimum of three batters or pitch until the end of a half-inning before being substituted. Before this rule, managers would often bring relief pitchers in to face a single batter to optimize matchup advantages.`,
+                        title: `2020`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(2020),
+                    y: yAxis(4.43),
+                    subject: {
+                        y: `bottom`
+                    }
+                }
+
+                ], [{
+                    note: {
+                        label: `The 2020 season saw fewer pitchers making appearances per team since the season was shortened to only 60 games following the onset of the COVID-19 pandemic.`,
+                        title: `2020`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(2020),
+                    y: yAxis(25.7),
+                    subject: {
+                        y: `bottom`
+                    }
+                }, {
+                    note: {
+                        label: `Some pitchers have already spoken out about the potential for the newly implemented pitch clock to be putting pitchers at risk for more frequent injuries.`,
+                        title: `2023`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(2023),
+                    y: yAxis(32.2),
+                    subject: {
+                        x: 'right',
+                        y: `top`
+                    }
+                }, {
+                    note: {
+                        label: `The 2024 season is still ongoing, so the amount of pitchers used per team will continue to rise.`,
+                        title: `2024`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(2024),
+                    y: yAxis(25.5),
+                    subject: {
+                        y: `bottom`
+                    }
+                }
 
                 ]
             ]
@@ -304,7 +434,7 @@
                 d3.select(`tooltip`)
                 .style(`opacity`, 1)
                 .style(`left`, `${event.pageX + 15}px`)
-                .style(`top`, `${event.pageY + 15}px`)
+                .style(`top`, `${event.pageY - 75}px`)
                 .html(`${annotation.note.label}`)
             })
             .on(`subjectout`, () => {
@@ -323,15 +453,15 @@
             const xAxis = axes.xAxis
             const yAxis = axes.yAxis
 
-            d3.selectAll(`#chartPath`)
+            d3.selectAll(`#chartPath${statName.replace(/[^a-zA-Z]/g, ``)}`)
             .remove()
 
-            d3.selectAll(`g[class=${statName}]`)
+            d3.selectAll(`g[class=${statName.replace(/[^a-zA-Z]/g, ``)}]`)
             .remove()
 
             svg.append(`path`)
             .attr(`transform`, `translate(${margin},${margin})`)
-            .attr(`id`, `chartPath`)
+            .attr(`id`, `chartPath${statName.replace(/[^a-zA-Z]/g, ``)}`)
             .datum(dataValues.slice(0, index + 1))
             .attr(`fill`, `none`)
             .attr(`stroke`, statColors[statName])
@@ -340,7 +470,7 @@
 
             svg.append(`g`)
             .attr(`transform`, `translate(${margin},${margin})`)
-            .attr(`class`, statName)
+            .attr(`class`, statName.replace(/[^a-zA-Z]/g, ``))
             .attr(`id`, `chartData`)
             .selectAll(`circle`)
             .data(dataValues.slice(0, index + 1))
@@ -478,7 +608,7 @@
             .attr(`class`, `yTitle`)
             .attr(`text-anchor`, `middle`)
             .attr(`transform`, `rotate(-90)`)
-            .text(`Average Occurrences Per Game`)
+            .text(`Average Occurrences`)
 
             return {
                 xAxis: xAxis,
@@ -547,7 +677,7 @@
             const drawAnnotationsWait = 5000
 
             for (var i = 0; i < stats.length; i++) {
-                activeTimeouts.push(setTimeout(drawLineChart, initialWait, stats, 1, axes))
+                activeTimeouts.push(setTimeout(drawLineChart, initialWait, stats[i], 1, axes))
             }
 
             activeTimeouts.push(setTimeout(drawTooltip, tooltipWait, stats, axes))
