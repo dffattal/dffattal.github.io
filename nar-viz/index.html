@@ -3,11 +3,13 @@
         <title>CS 416 Narrative Visualization</title>
         <style>
             body {
-                font-family: Arial, Helvetica, sans-serif
+                font-family: Arial, Helvetica, sans-serif;
+                background-color: #d9d9d9;
             }
             header {
                 background-color: #d9d9d9;
                 padding: 25px;
+                height: 5%;
                 text-align: center;
                 font-size: 30px;
                 color: black;
@@ -44,13 +46,23 @@
             }
             tooltip {
                 width: 250px;
-                height: 100px;
                 opacity: 0;
                 position: absolute;
                 border-radius: 20px;
                 border: 1px solid #666666;
-                background-color: #e9e9e9;
+                background-color: #dfdfdf;
                 padding: 10px;
+            }
+            legend {
+                position: absolute;
+                border-radius: 20px;
+                border: 1px solid #666666;
+                padding: 5px;
+                cursor: pointer;
+                background: #dfdfdf;
+            }
+            legend:active {
+                background: #cdcdcd;
             }
             .annotations path {
                 stroke: maroon;
@@ -63,16 +75,16 @@
     <header>The Rise of Three True Outcomes and Other Recent Trends in Major League Baseball</header>
     <script src="./d3.v7.js">
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js">
+    <script src="./d3-annotation.min.js">
     </script>
-    <body onload="loadData()">
+    <body onload="loadData(0, [`HR`], [0.5, 1.5])">
         <chart>
-        <tooltip>
-            
-        </tooltip>
-        <svg>
-
-        </svg>   
+            <legend>
+            </legend>
+            <tooltip>
+            </tooltip>
+            <svg>
+            </svg>   
         </chart>
        
         <nav>
@@ -85,200 +97,111 @@
         </article>
     </body>
     <script>
-        // d3.select(`svg`)
-        // .append(`g`)
-        // .selectAll(`circle`)
-        // .data([1, 4, 7, 9, 11])
-        // .enter()
-        // .append(`circle`)
-        // .attr(`cx`, (d, i) => 100 + d)
-        // .attr(`cy`, (d, i) => i * 100 + 100)
-        // .attr(`r`, (d, i) => d * 4)
+        const activeTimeouts = []
+        const legend = true
 
-        // console.log([1, 4, 7, 9, 11])
+        const svg = d3.select(`svg`)
+        const tooltip = d3.select(`tooltip`)
+        const svgDimensions = svg.node().getBoundingClientRect()
 
-        // async () => {
-        //     const data = await d3.csv(`./data/bat.csv`)
-        //     console.log(data)
-        // }
+        const width = svgDimensions.width
+        const height = svgDimensions.height
+        const margin = 50
+        const tooltipWidth = width / 45
+        const tooltipText = {}
 
-        // d3.csv(`https://dffattal.github.io/nar-viz/data/bat.csv`)
-        // .then(data => {
-        //     console.log(data)
-        //     for (const row in data) {
-        //         console.log(data[row][`SO`])
-        //     }
-        // })
-        // .catch(error => {
-        //     console.log(error)
-        // })
+        const statColors = {
+            SO: `firebrick`,
+            BB: `dodgerblue`,
+            HR: `yellowgreen`,
+            TTO: `darkslategray`,
+            R: `olivedrab`
+        }
 
+        const statLong = {
+            SO: `Strikeouts`,
+            BB: `Walks`,
+            HR: `Home Runs`,
+            TTO: `Three True Outcomes`,
+            R: `Runs`,
+        }
 
-        async function loadData() {
-            const svgDimensions = d3.select(`svg`).node().getBoundingClientRect()
-            const width = svgDimensions.width
-            const height = svgDimensions.height
-            const margin = 50
-            const tooltipWidth = width / 45
+        var data = []
+        const dataValues = []
 
-            const data = await d3.csv(`https://dffattal.github.io/nar-viz/data/bat.csv`)
-            // console.log(data)
-            const dataValues = []
-
-            const tooltip = d3.select(`tooltip`)
+        async function loadData(page, stats, domain) {
+            data = await d3.csv(`https://dffattal.github.io/nar-viz/data/bat.csv`)
 
             for (var i = 44; i >= 0; i--) { //filter data from 1980-2024
                 data[i][`TTO`] = (Number(data[i][`SO`]) + Number(data[i][`BB`]) + Number(data[i][`HR`])).toFixed(2)
                 dataValues.push(data[i])
             }
 
-            const statColors = {
-                SO: `firebrick`,
-                BB: `dodgerblue`,
-                HR: `yellowgreen`,
-                TTO: `darkslategray`
-            }
+            const axes = setAxes(domain)
+            setLegendToggle(axes)
+            updateLegend(stats, axes)
+            drawChart(page, stats, axes)
+        }
 
-            function drawLineChart(statName, index) {
-                d3.selectAll(`path[class=path${index - 1}]`)
-                .remove()
+        function drawAnnotations(page, axes) {
+            const xAxis = axes.xAxis
+            const yAxis = axes.yAxis
 
-                d3.selectAll(`g[class=${statName}]`)
-                .remove()
+            const annotationsList = [
+                [{
+                    note: {
+                        label: `Home run rate in 1987 increased by over 16% from the previous season, breaking the 1 HR/game barrier for the first time ever. Viewers speculated that this sharp rise may have been caused by the use of a different ball that led to easier home runs.`,
+                        title: `1987`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(1987),
+                    y: yAxis(1.06),
+                    subject: {
+                        x: 'right',
+                        y: 'top'
+                    }
+                },{
+                    note: {
+                        label: `The 2019 season's home run rate was a 20% increase from 2018 and more than double the rate of the 1981 season. This time, the league confirmed that the culprit was a new type of ball that had less drag. The ball would be phased out in 2022.`,
+                        title: `2019`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(2019),
+                    y: yAxis(1.39),
+                    subject: {
+                        x: 'left',
+                        y: 'top'
+                    }
+                },{
+                    note: {
+                        label: `MLB officially prohibited the use of steroids in 1991, but did not begin testing players for steroids until 2003.`,
+                        title: `1991`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(1991),
+                    y: yAxis(0.80),
+                    subject: {
+                        y: 'top'
+                    }
+                },{
+                    note: {
+                        label: `In 2015, MLB introduced Statcast to all ballparks, providing advanced metrics on player movements and mechanics. This data may be heavily analyzed by coaches and players to fine-tune skills and improve performance.`,
+                        title: `2015`,
+                        bgPadding: 10
+                    },
+                    x: xAxis(2015),
+                    y: yAxis(1.01),
+                    subject: {
+                        x: 'right',
+                        y: 'bottom'
+                    }
+                }],
+                [
 
-                d3.select(`svg`)
-                .append(`path`)
-                .attr(`transform`, `translate(${margin},${margin})`)
-                .attr(`class`, `path${index}`)
-                .datum(dataValues.slice(0, index + 1))
-                .attr(`fill`, `none`)
-                .attr(`stroke`, statColors[statName])
-                .attr(`stroke-width`, 3)
-                .attr(`d`, d3.line().x(d => xAxis(d[`Year`])).y(d => statName === `TTO` ? yAxis(d[`TTO`]) : yAxis(d[statName])))
+                ]
+            ]
 
-                d3.select(`svg`)
-                .append(`g`)
-                .attr(`transform`, `translate(${margin},${margin})`)
-                .attr(`class`, statName)
-                .selectAll(`circle`)
-                .data(dataValues.slice(0, index + 1))
-                .enter()
-                .append(`circle`)
-                // .on(`mouseover`, (_, d) => {
-                //     tooltip.style(`opacity`, 1)
-                //     .html(`Value is ${statName === `TTO` ? Number(d[`SO`]) + Number(d[`BB`]) + Number(d[`HR`]) : d[statName]}`)
-                // })
-                // .on(`mouseout`, (d, i) => {
-                //     tooltip.style(`opacity`, 0)
-                // })
-                .style(`stroke`, `black`)
-                .style(`fill`, statColors[statName])
-                .attr(`r`, () => 3)
-                .attr(`cx`, d => xAxis(d[`Year`]))
-                .attr(`cy`, d => statName === `TTO` ? yAxis(d[`TTO`]) : yAxis(d[statName]))
-
-                if (index < 44) setTimeout(drawLineChart, 75, statName, index + 1)
-            }
-
-            function drawTooltip() {
-                for (var i = 0; i < 45; i++) {
-                    const yearData = dataValues[i]
-                    const year = yearData['Year']
-
-                    d3.select(`svg`)
-                    .append(`rect`)
-                    .attr(`transform`, `translate(${margin},${margin})`)
-                    .attr(`class`, `tooltipHover${year}`)
-                    .attr(`x`, xAxis(year) - tooltipWidth / 2)
-                    .attr(`y`, 0)
-                    .attr(`width`, tooltipWidth)
-                    .attr(`height`, height)
-                    .style(`opacity`, 0)
-                    .attr(`z-index`, 1)
-                    .on(`mouseover`, event => {
-                        d3.select(`line[class=tooltipLine${year}]`)
-                        .style(`stroke-width`, 1)
-                        d3.select(`tooltip`)
-                        .style(`opacity`, 1)
-                        .style(`left`, `${event.pageX + 15}px`)
-                        .style(`top`, `${event.pageY + 15}px`)
-                        .html(`<b>${year}</b>:<br><br>${yearData[`SO`]} strikeouts/game<br>${yearData[`BB`]} walks/game<br>${yearData[`HR`]} home runs/game<br>${yearData[`TTO`]} three true outcomes/game`)
-                    })
-                    .on(`mouseout`, () => {
-                        d3.select(`line[class=tooltipLine${year}]`)
-                        .style(`stroke-width`, 0)
-                        d3.select(`tooltip`)
-                        .style(`opacity`, 0)
-                    })
-
-                    d3.select(`svg`)
-                    .append(`line`)
-                    .attr(`transform`, `translate(${margin},${margin})`)
-                    .attr(`class`, `tooltipLine${year}`)
-                    .style(`stroke`, `black`)
-                    .style(`stroke-width`, 0)
-                    .attr(`x1`, xAxis(year))
-                    .attr(`x2`, xAxis(year))
-                    .attr(`y1`, 0)
-                    .attr(`y2`, height - margin * 2)
-                }
-            }
-
-            const xAxis = d3.scaleLinear()
-            .domain([1980, 2024])
-            .range([0, width - margin * 2])
-            d3.select(`svg`)
-            .append(`g`)
-            .attr(`transform`, `translate(${margin},${height - margin})`)
-            .call(d3.axisBottom(xAxis).tickFormat(d3.format(`d`)))
-
-            const yAxis = d3.scaleLinear()
-            .domain([0, 2])
-            .range([height - margin * 2, 0])
-            d3.select(`svg`)
-            .append(`g`)
-            .attr(`transform`, `translate(${margin},${margin})`)
-            .call(d3.axisLeft(yAxis))
-            
-            d3.select(`svg`)
-            .append(`text`)
-            .attr(`class`, `xTitle`)
-            .attr(`text-anchor`, `middle`)
-            .attr(`x`, width / 2)
-            .attr(`y`, height)
-            .text(`Year`)
-
-            d3.select(`svg`)
-            .append(`text`)
-            .attr(`class`, `yTitle`)
-            .attr(`text-anchor`, `middle`)
-            .attr(`x`, 500)
-            .attr(`y`, 5500)
-            .attr(`transform`, `rotate(-90)`)
-            .text(`Test Title`)
-
-            // setTimeout(drawLineChart, 500, `SO`, 1)
-            // setTimeout(drawLineChart, 500, `BB`, 1)
-            setTimeout(drawLineChart, 500, `HR`, 1)
-            // setTimeout(drawLineChart, 4500, `TTO`, 1)
-            setTimeout(drawTooltip, 4500)
-
-            const annotations = [{
-                note: {
-                    label: `Home run rate increases by over 16%, breaking the 1 HR/game barrier for the first time.`,
-                    title: `1987`,
-                    bgPadding: 10
-                },
-                x: xAxis(1987),
-                y: yAxis(1.06),
-                dx: 50,
-                dy: 50,
-                className: `show-bg`,
-                subject: {
-                    x: 'right',
-                    y: 'top'
-                }
-            }]
+            const annotations = annotationsList[page]
 
             const createAnnotations = d3.annotation()
             .notePadding(10)
@@ -291,21 +214,231 @@
                 .style(`top`, `${event.pageY + 15}px`)
                 .html(`${annotation.note.label}`)
             })
+            .on(`subjectout`, () => {
+                d3.select(`tooltip`)
+                .html(``)
+                .style(`opacity`, 0)
+            })
 
-            d3.select(`svg`)
-            .append(`g`)
+            svg.append(`g`)
             .attr(`transform`, `translate(${margin},${margin})`)
             .attr(`class`, `annotations`)
             .call(createAnnotations)
+        }
 
-            // d3.select(`svg`)
-            // .append(`path`)
-            // .attr(`transform`, `translate(${margin},${margin})`)
-            // .datum(dataValues)
-            // .attr(`fill`, `none`)
-            // .attr(`stroke`, `dodgerblue`)
-            // .attr(`stroke-width`, 2)
-            // .attr(`d`, d3.line().x(d => xAxis(d[`Year`])).y(d => yAxis(d[`SO`])))
+        function drawLineChart(statName, index, axes) {
+            const xAxis = axes.xAxis
+            const yAxis = axes.yAxis
+
+            d3.selectAll(`path[class=path${index - 1}]`)
+            .remove()
+
+            d3.selectAll(`g[class=${statName}]`)
+            .remove()
+
+            svg.append(`path`)
+            .attr(`transform`, `translate(${margin},${margin})`)
+            .attr(`class`, `path${index}`)
+            .datum(dataValues.slice(0, index + 1))
+            .attr(`fill`, `none`)
+            .attr(`stroke`, statColors[statName])
+            .attr(`stroke-width`, 3)
+            .attr(`d`, d3.line().x(d => xAxis(d[`Year`])).y(d => yAxis(d[statName])))
+
+            svg.append(`g`)
+            .attr(`transform`, `translate(${margin},${margin})`)
+            .attr(`class`, statName)
+            .selectAll(`circle`)
+            .data(dataValues.slice(0, index + 1))
+            .enter()
+            .append(`circle`)
+            .style(`stroke`, `black`)
+            .style(`fill`, statColors[statName])
+            .attr(`r`, () => 3)
+            .attr(`cx`, d => xAxis(d[`Year`]))
+            .attr(`cy`, d => yAxis(d[statName]))
+
+            if (index < 44) {
+                activeTimeouts.push(setTimeout(drawLineChart, 75, statName, index + 1, axes))
+            }
+        }
+
+        function drawTooltip(stats, axes) {
+            const xAxis = axes.xAxis
+            const yAxis = axes.yAxis
+
+            for (var i = 0; i < 45; i++) {
+                const yearData = dataValues[i]
+                const year = yearData['Year']
+
+                var htmlText = `<b>${year}</b><br>`
+                for (var j = 0; j < stats.length; j++) {
+                    const stat = stats[j]
+                    htmlText = htmlText.concat(`<br>${statLong[stat]}: ${yearData[stat]}`)
+                    tooltipText[year] = htmlText
+                }
+
+                svg.append(`rect`)
+                .attr(`transform`, `translate(${margin},${margin})`)
+                .attr(`class`, `tooltipHover${year}`)
+                .attr(`x`, xAxis(year) - tooltipWidth / 2)
+                .attr(`y`, 0)
+                .attr(`width`, tooltipWidth)
+                .attr(`height`, height)
+                .style(`opacity`, 0)
+                .attr(`z-index`, 1)
+                .on(`mouseover`, event => {
+                    d3.select(`line[class=tooltipLine${year}]`)
+                    .style(`stroke-width`, 1)
+                    d3.select(`tooltip`)
+                    .style(`opacity`, 1)
+                    .style(`left`, `${event.pageX + 15}px`)
+                    .style(`top`, `${event.pageY + 15}px`)
+                    .html(tooltipText[year])
+                })
+                .on(`mouseout`, () => {
+                    d3.select(`line[class=tooltipLine${year}]`)
+                    .style(`stroke-width`, 0)
+                    d3.select(`tooltip`)
+                    .html(``)
+                    .style(`opacity`, 0)
+                })
+
+                svg.append(`line`)
+                .attr(`transform`, `translate(${margin},${margin})`)
+                .attr(`class`, `tooltipLine${year}`)
+                .style(`stroke`, `black`)
+                .style(`stroke-width`, 0)
+                .attr(`x1`, xAxis(year))
+                .attr(`x2`, xAxis(year))
+                .attr(`y1`, 0)
+                .attr(`y2`, height - margin * 2)
+            }
+        }
+
+        function updateLegend(stats, axes) {
+            const xAxis = axes.xAxis
+
+            svg.selectAll(`circle[class=legendStat]`)
+            .remove()
+
+            svg.selectAll(`circle[class=legendStat]`)
+            .data(stats)
+            .enter()
+            .append(`circle`)
+            .attr(`class`, `legendStat`)
+            .attr(`transform`, `translate(${margin},${margin})`)
+            .attr(`cx`, xAxis(1981))
+            .attr(`cy`, (_, i) => 10 + 20 * i)
+            .attr(`r`, 5)
+            .style(`fill`, stat => statColors[stat])
+
+            svg.selectAll(`text[class=legendLabel]`)
+            .remove()
+
+            svg.selectAll(`text[class=legendLabel]`)
+            .data(stats)
+            .enter()
+            .append(`text`)
+            .attr(`class`, `legendLabel`)
+            .attr(`transform`, `translate(${margin},${margin})`)
+            .attr(`x`, xAxis(1981) + 20)
+            .attr(`y`, (_, i) => 15 + 20 * i)
+            .style(`fill`, stat => statColors[stat])
+            .style(`font-weight`, `bold`)
+            .text(stat => statLong[stat])
+        }
+
+        function setAxes(domain) {
+            const xAxis = d3.scaleLinear()
+            .domain([1980, 2024])
+            .range([0, width - margin * 2])
+
+            svg.append(`g`)
+            .attr(`transform`, `translate(${margin},${height - margin})`)
+            .attr(`class`, `xAxis`)
+            .call(d3.axisBottom(xAxis).tickFormat(d3.format(`d`)))
+
+            const yAxis = d3.scaleLinear()
+            .domain(domain)
+            .range([height - margin * 2, 0])
+
+            svg.append(`g`)
+            .attr(`transform`, `translate(${margin},${margin})`)
+            .attr(`class`, `yAxis`)
+            .call(d3.axisLeft(yAxis))
+            
+            svg.append(`text`)
+            .attr(`class`, `xTitle`)
+            .attr(`text-anchor`, `middle`)
+            .attr(`x`, width / 2)
+            .attr(`y`, height)
+            .text(`Season`)
+
+            svg.append(`g`)
+            .attr(`class`, `yTitleDiv`)
+            .attr(`transform`, `translate(${20},${height / 2})`)
+            .append(`text`)
+            .attr(`class`, `yTitle`)
+            .attr(`text-anchor`, `middle`)
+            .attr(`transform`, `rotate(-90)`)
+            .text(`Average Occurrences Per Game`)
+
+            return {
+                xAxis: xAxis,
+                yAxis: yAxis
+            }
+        }
+
+        function setLegendToggle(axes) {
+            const xAxis = axes.xAxis
+            const headerDimensions = d3.select(`header`).node().getBoundingClientRect()
+            const legendY = headerDimensions.height + 15
+
+            d3.select(`legend`)
+            .attr(`transform`, `translate(${margin},${margin})`)
+            .style(`left`, xAxis(1983))
+            .style(`top`, legendY)
+            .text(`Hide Legend`)
+            .on(`click`, () => {
+                if (this.legend) {
+                    d3.select(`legend`)
+                    .text(`Show Legend`)
+                    this.legend = false
+
+                    d3.selectAll(`circle[class=legendStat]`)
+                    .style(`opacity`, 0)
+
+                    d3.selectAll(`text[class=legendLabel]`)
+                    .style(`opacity`, 0)
+                }
+                else {
+                    d3.select(`legend`)
+                    .text(`Hide Legend`)
+                    this.legend = true
+
+                    d3.selectAll(`circle[class=legendStat]`)
+                    .style(`opacity`, 1)
+
+                    d3.selectAll(`text[class=legendLabel]`)
+                    .style(`opacity`, 1)
+                }
+            })
+        }
+
+        function drawChart(page, stats, axes) {
+            const xAxis = axes.xAxis
+            const yAxis = axes.yAxis
+            const initialWait = 500
+            const tooltipWait = 4500
+            const drawAnnotationsWait = 5000
+
+            for (var i = 0; i < stats.length; i++) {
+                activeTimeouts.push(setTimeout(drawLineChart, initialWait, stats, 1, axes))
+            }
+
+            activeTimeouts.push(setTimeout(drawTooltip, tooltipWait, stats, axes))
+            activeTimeouts.push(setTimeout(drawAnnotations, drawAnnotationsWait, page, axes))
         }
     </script>
 </html>
